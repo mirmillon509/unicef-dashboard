@@ -1,58 +1,97 @@
 import streamlit as st
-import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
 
-st.set_page_config(layout="wide")
-st.title("🛡️ UNICEF Child Protection Dashboard")
+st.set_page_config(layout="wide", page_title="UNICEF Dashboard")
+st.markdown("""
+# 🛡️ UNICEF Child Protection Dashboard - Project Officer
 
-# DONNEES EMBARQUEES
-data = {
-    'Month': ['Oct-25', 'Nov-25', 'Dec-25', 'Jan-26', 'Feb-26', 'Mar-26'] * 12,
-    'Region': (['North', 'South', 'East', 'West'] * 3) * 6,
-    'Project': (['Vaccination', 'School', 'Protection'] * 24),
-    'Children_Reached': [2849,3567,3921,1876,5123,2987,4123,2345,3456,2890,1678,4231]*6,
-    'Target': [6789,7456,6234,4567,6543,5123,5234,3890,7890,4321,5678,3890]*6,
-    'Progress_Pct': [85,82,89,76,93,91,79,85,89,77,69,72]*6
+**Données simulées réalistes** (6 mois, 4 régions, 3 projets)
+""")
+
+# CSS personnalisé
+st.markdown("""
+<style>
+.metric-card { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+               padding: 20px; border-radius: 15px; color: white; text-align: center; }
+.alert { background: #fee; padding: 15px; border-left: 5px solid #f44336; }
+</style>
+""", unsafe_allow_html=True)
+
+# DONNÉES SIMULÉES
+total_reached = 72048
+progress_pct = 92.3
+satisfaction = 8.7
+regions_data = {
+    "North": 18500, "South": 21000, "East": 16500, "West": 16048
 }
-df = pd.DataFrame(data)
+months_data = {"Oct-25": 11500, "Nov-25": 12000, "Dec-25": 11800, "Jan-26": 12500, "Feb-26": 12200, "Mar-26": 10048}
 
-# KPI
-col1, col2, col3 = st.columns(3)
-total = df['Children_Reached'].sum()
-col1.metric("👶 Children Reached", f"{total:,}")
-col2.metric("🎯 Progress", f"{(total/df['Target'].sum()*100):.0f}%")
-col3.metric("⭐ Satisfaction", "8.7/10")
+# KPI CARDS
+col1, col2, col3, col4 = st.columns(4)
+col1.markdown(f"""
+<div class="metric-card">
+    <h2 style="margin:0">{total_reached:,}</h2>
+    <p>👶 Children Reached</p>
+</div>
+""", unsafe_allow_html=True)
+
+col2.markdown(f"""
+<div class="metric-card">
+    <h2 style="margin:0">{progress_pct}%</h2>
+    <p>🎯 Progress vs Target</p>
+</div>
+""", unsafe_allow_html=True)
+
+col3.markdown(f"""
+<div class="metric-card">
+    <h2 style="margin:0">{satisfaction}/10</h2>
+    <p>⭐ Satisfaction</p>
+</div>
+""", unsafe_allow_html=True)
+
+col4.markdown("""
+<div class="metric-card">
+    <h2 style="margin:0">$42</h2>
+    <p>💰 Cost per Child</p>
+</div>
+""", unsafe_allow_html=True)
 
 # FILTRES
-st.subheader("🔍 Filtres")
-col1, col2 = st.columns(2)
-month_f = col1.multiselect("Mois", df['Month'].unique())
-region_f = col2.multiselect("Région", df['Region'].unique())
-df_f = df[df['Month'].isin(month_f) & df['Region'].isin(region_f)]
+st.subheader("🔍 Filtres Interactifs")
+col_f1, col_f2 = st.columns(2)
+month_filter = col_f1.multiselect("Mois", list(months_data.keys()), default=list(months_data.keys()))
+region_filter = col_f2.multiselect("Région", list(regions_data.keys()), default=list(regions_data.keys()))
 
-# GRAPHIQUE 1 : LIGNES
-fig1, ax1 = plt.subplots()
-monthly = df_f.groupby('Month')['Children_Reached'].sum()
-ax1.plot(monthly.index, monthly.values, marker='o', linewidth=3, color='#1f77b4')
-ax1.set_title('📈 Enfants Atteints par Mois', fontsize=14, fontweight='bold')
-ax1.grid(True, alpha=0.3)
-ax1.set_ylabel('Nombre')
-st.pyplot(fig1)
+# GRAPHIQUES HTML/SVG
+st.subheader("📊 Visualisations")
 
-# GRAPHIQUE 2 : BARRES
-fig2, ax2 = plt.subplots()
-regions = df_f.groupby('Region')['Children_Reached'].sum()
-colors = plt.cm.Set3(np.linspace(0,1,len(regions)))
-ax2.bar(regions.index, regions.values, color=colors)
-ax2.set_title('🗺️ Par Région', fontsize=14, fontweight='bold')
-ax2.tick_params(axis='x', rotation=45)
-st.pyplot(fig2)
+# Graphique en barres (Régions) - SVG pur
+st.markdown(f"""
+<div style="background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+<h3>🗺️ Enfants Atteints par Région</h3>
+<svg width="100%" height="300" viewBox="0 0 500 300">
+  <rect x="50" y="250" width="60" height="50" fill="#4CAF50" opacity="0.8"/>
+  <text x="80" y="280" text-anchor="middle" fill="black" font-size="12">North<br/>{regions_data['North']:,}</text>
+  <rect x="130" y="200" width="60" height="100" fill="#2196F3" opacity="0.8"/>
+  <text x="160" y="230" text-anchor="middle" fill="black" font-size="12">South<br/>{regions_data['South']:,}</text>
+  <rect x="210" y="260" width="60" height="40" fill="#FF9800" opacity="0.8"/>
+  <text x="240" y="290" text-anchor="middle" fill="black" font-size="12">East<br/>{regions_data['East']:,}</text>
+  <rect x="290" y="255" width="60" height="45" fill="#F44336" opacity="0.8"/>
+  <text x="320" y="285" text-anchor="middle" fill="black" font-size="12">West<br/>{regions_data['West']:,}</text>
+</svg>
+</div>
+""", unsafe_allow_html=True)
 
-# ALERTES + TABLEAU
-low = df_f[df_f['Progress_Pct'] < 80]
-if len(low) > 0:
-    st.error(f"🚨 {len(low)} zones < 80% progression !")
-
-st.subheader("📋 Données")
-st.dataframe(df_f.head(10))
+# Graphique ligne (Mois) - SVG
+st.markdown("""
+<div style="background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-top: 20px;">
+<h3>📈 Évolution Mensuelle</h3>
+<svg width="100%" height="300" viewBox="0 0 600 300">
+  <polyline points="50,250 120,220 190,210 260,180 330,160 400,170" 
+            fill="none" stroke="#1f77b4" stroke-width="4" stroke-linecap="round"/>
+  <circle cx="50" cy="250" r="6" fill="#1f77b4"/>
+  <text x="40" y="275" font-size="11">Oct</text>
+  <circle cx="120" cy="220" r="6" fill="#1f77b4"/>
+  <text x="110" y="245" font-size="11">Nov</text>
+  <circle cx="190" cy="210" r="6" fill="#1f77b4"/>
+  <text x="180" y="235" font-size="11">Dec</text>
+  <circle cx="260"
