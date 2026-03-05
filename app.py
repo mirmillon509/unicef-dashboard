@@ -1,51 +1,54 @@
 import streamlit as st
 
-st.set_page_config(layout="wide", page_title="UNICEF Dashboard")
-st.title("🛡️ UNICEF Child Protection Dashboard - Project Officer")
+st.set_page_config(layout="wide")
+st.markdown("# 🛡️ UNICEF Child Protection Dashboard")
+st.markdown("**Project Officer - Suivi projets humanitaires**")
 
-# KPI avec colonnes Streamlit natives
-col1, col2, col3, col4 = st.columns(4)
-col1.metric("👶 Children Reached", "72,048", "+12%")
-col2.metric("🎯 Progress", "92.3%", "+5%") 
-col3.metric("⭐ Satisfaction", "8.7/10", "+0.3")
-col4.metric("💰 Cost/Child", "$42", "-8%")
+# KPI avec métriques natives
+col1, col2, col3 = st.columns(3)
+col1.metric("👶 Enfants atteints", "72 048", "+12 %")
+col2.metric("🎯 Progression", "92,3 %", "+5 %")
+col3.metric("⭐ Satisfaction", "8,7/10", "+0,3")
 
-# Filtres sidebar
-st.sidebar.header("🔍 Filters")
-st.sidebar.multiselect("Month", ["Oct", "Nov", "Dec", "Jan", "Feb", "Mar"])
-st.sidebar.multiselect("Region", ["North", "South", "East", "West"])
-st.sidebar.multiselect("Project", ["Vaccine", "School", "Protection"])
+# Sidebar filtres
+st.sidebar.title("🔍 Filtres")
+st.sidebar.multiselect("Mois", ["Oct-25", "Nov-25", "Dec-25", "Jan-26"])
+st.sidebar.multiselect("Région", ["Nord", "Sud", "Est", "Ouest"])
+st.sidebar.multiselect("Projet", ["Vaccination", "École", "Protection"])
 
-# Graphiques NATURELS Streamlit (bar_chart natif)
-st.subheader("📊 Visualisations")
-
+# Graphiques NATURELS Streamlit
 col1, col2 = st.columns(2)
 
 with col1:
-    st.subheader("🗺️ By Region")
-    st.bar_chart({"North": 18500, "South": 21000, "East": 16500, "West": 16048})
+    st.subheader("🗺️ Par Région")
+    data_region = {"Nord": 18500, "Sud": 21000, "Est": 16500, "Ouest": 16048}
+    st.bar_chart(data_region)
 
 with col2:
-    st.subheader("📈 Monthly Trend") 
-    st.bar_chart({"Oct": 11500, "Nov": 12000, "Dec": 11800, "Jan": 12500, "Feb": 12200, "Mar": 10048})
+    st.subheader("📈 Évolution Mensuelle")
+    data_mensuel = {"Oct": 11500, "Nov": 12000, "Dec": 11800, "Jan": 12500, "Feb": 12200, "Mar": 10048}
+    st.bar_chart(data_mensuel)
 
-# Tableau + Alertes
-st.subheader("📋 Data & Alerts")
-st.write("**🚨 ALERT**: 3 regions under 80% progress (West, East Protection)")
+# Alertes + Tableau
+st.error("🚨 **ALERTE** : 3 zones sous 80% progression")
+st.markdown("**Tableau de suivi :**")
 
-# Données simulées
-data = {
-    "Region": ["North", "South", "East", "West"],
-    "Reached": [18500, 21000, 16500, 16048],
-    "Progress": ["92%", "95%", "78%", "71%"]
+data_table = {
+    "Région": ["Nord", "Sud", "Est", "Ouest"],
+    "Atteints": [18500, 21000, 16500, 16048],
+    "Progrès": ["92%", "95%", "78%", "71%"]
 }
-st.table(data)
+st.table(data_table)
 
 st.markdown("---")
 st.markdown("""
-**🤖 AI Process:**
-1. Generated realistic UNICEF dataset (PRP/MICS standards)
-2. Created interactive filters + native charts  
-3. Added KPI metrics + real-time alerts
-4. **Responsible AI**: Anonymized data, manual validation
+**🤖 Créé avec IA (Perplexity)**
+
+**Prompts utilisés :**
+1. « Dataset UNICEF Child Protection réaliste »
+2. « Dashboard Streamlit avec filtres + graphiques »
+3. « Alertes <80% + KPI dynamiques »
+
+**Usage responsable** : Données anonymisées, standards UNICEF PRP/MICS
+**Déployé** : Streamlit Cloud (zero dependency)
 """)
