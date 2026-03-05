@@ -1,29 +1,97 @@
 import streamlit as st
+import pandas as pd
+import altair as alt
 
-st.set_page_config(layout="wide")
+st.set_page_config(layout="wide", page_title="UNICEF Dashboard")
 st.title("🛡️ UNICEF Child Protection Dashboard")
 
-st.markdown("""
-<style>
-.metric {background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 1.5rem; border-radius: 10px; color: white; text-align: center; margin: 0.5rem;}
-.alert {background: #fee; padding: 1rem; border-left: 5px solid #f44336; margin: 1rem 0;}
-</style>
-""", unsafe_allow_html=True)
+# Dataset simulé réaliste UNICEF
+@st.cache_data
+def load_data():
+    data = {
+        'Month': ['Oct-25']*4 + ['Nov-25']*4 + ['Dec-25']*4 + ['Jan-26']*4 + ['Feb-26']*4 + ['Mar-26']*4,
+        'Region': ['North', 'South', 'East', 'West'] * 6,
+        'Project': ['Vaccination', 'School', 'Protection', 'Health'] * 6,
+        'Children_Reached': [2849, 3921, 1876, 5123, 3567, 2345, 3456, 2890, 4123, 2987, 4231, 1678, 3921, 5123, 2987, 2849, 3567, 2345, 3456, 2890, 4123, 2987, 4231, 1678],
+        'Progress_Pct': [85.2, 89.4, 76.5, 93.2, 82.1, 91.2, 88.7, 76.8, 94.5, 84.6, 72.1, 69.4, 89.4, 93.2, 91.2, 85.2, 82.1, 88.7, 76.8, 94.5, 84.6, 72.1, 69.4, 89.4]
+    }
+    return pd.DataFrame(data)
 
-col1, col2, col3 = st.columns(3)
-col1.markdown('<div class="metric"><h2>72,048</h2><p>👶 Children Reached</p></div>', unsafe_allow_html=True)
-col2.markdown('<div class="metric"><h2>92.3%</h2><p>🎯 Progress</p></div>', unsafe_allow_html=True)
-col3.markdown('<div class="metric"><h2>8.7/10</h2><p>⭐ Satisfaction</p></div>', unsafe_allow_html=True)
+df = load_data()
 
-st.subheader("🔍 Filters")
+# SIDEBAR FILTRES
+st.sidebar.header("🔍 Filtres")
+month_filter = st.sidebar.multiselect("Mois", df['Month'].unique(), default=df['Month'].unique())
+region_filter = st.sidebar.multiselect("Région", df['Region'].unique(), default=df['Region'].unique())
+project_filter = st.sidebar.multiselect("Projet", df['Project'].unique(), default=df['Project'].unique())
+
+df_filtered = df[
+    (df['Month'].isin(month_filter)) &
+    (df['Region'].isin(region_filter)) &
+    (df['Project'].isin(project_filter))
+]
+
+# KPI PRINCIPAL
+col1, col2, col3, col4 = st.columns(4)
+total_reached = df_filtered['Children_Reached'].sum()
+avg_progress = df_filtered['Progress_Pct'].mean()
+col1.metric("👶 Enfants atteints", f"{total_reached:,}", f"+{total_reached//1000}k")
+col2.metric("🎯 Progression moyenne", f"{avg_progress:.1f}%")
+col3.metric("📊 Projets actifs", len(df_filtered['Project'].unique()))
+col4.metric("🗺️ Régions couvertes", len(df_filtered['Region'].unique()))
+
+# GRAPHIQUES AVANCÉS ALTAIR
+st.subheader("📊 Visualisations Interactives")
+
 col1, col2 = st.columns(2)
-col1.multiselect("Month", ["Oct-25", "Nov-25", "Dec-25"], default=["Oct-25"])
-col2.multiselect("Region", ["North", "South", "East"], default=["North"])
 
-st.markdown('<div style="background:white;padding:20px;border-radius:10px;"><h3>🗺️ By Region</h3><svg width="100%" height="200" viewBox="0 0 400 200"><rect x="20" y="150" width="40" height="50" fill="#4CAF50"/><text x="40" y="175" text-anchor="middle" font-size="12">North 18k</text><rect x="80" y="100" width="40" height="100" fill="#2196F3"/><text x="100" y="125" text-anchor="middle" font-size="12">South 21k</text><rect x="140" y="160" width="40" height="40" fill="#FF9800"/><text x="160" y="185" text-anchor="middle" font-size="12">East 16k</text></svg></div>', unsafe_allow_html=True)
+# 1. Évolution temporelle
+line_chart = alt.Chart(df_filtered).mark_line(strokeWidth=3).encode(
+    x='Month:N',
+    y='Children_Reached:Q',
+    color='Project:N',
+    tooltip=['Month', 'Children_Reached', 'Progress_Pct']
+).properties(width=400, height=300, title="Évolution Mensuelle")
+col1.altair_chart(line_chart, use_container_width=True)
 
-st.markdown('<div style="background:white;padding:20px;border-radius:10px;margin-top:20px;"><h3>📈 Monthly Trend</h3><svg width="100%" height="200" viewBox="0 0 400 200"><polyline points="30,170 80,140 130,130 180,100 230,80 280,90" stroke="#1f77b4" stroke-width="3" fill="none"/><circle cx="30" cy="170" r="4" fill="#1f77b4"/><text x="15" y="195" font-size="11">Oct</text><circle cx="80" cy="140" r="4" fill="#1f77b4"/><text x="65" y="165" font-size="11">Nov</text></svg></div>', unsafe_allow_html=True)
+# 2. Répartition par région
+bar_chart = alt.Chart(df_filtered).mark_bar(size=50).encode(
+    x='Region:N',
+    y='Children_Reached:Q',
+    color='Region:N',
+    tooltip=['Region', 'Children_Reached']
+).properties(width=400, height=300, title="Par Région")
+col2.altair_chart(bar_chart, use_container_width=True)
 
-st.markdown('<div style="background:#fee;padding:15px;border-left:5px solid #f44336;margin:20px 0;">🚨 ALERT: 2 regions under 80% progress</div>', unsafe_allow_html=True)
+# 3. Heatmap progression
+st.subheader("🌡️ Heatmap Progression")
+heatmap = alt.Chart(df_filtered).mark_rect().encode(
+    x='Region:N',
+    y='Project:N',
+    color='Progress_Pct:Q',
+    tooltip=['Region', 'Project', 'Progress_Pct']
+).properties(width=600, height=300)
+st.altair_chart(heatmap, use_container_width=True)
 
-st.markdown("*AI-generated: UNICEF Child Protection KPIs with SVG charts*")
+# ALERTES
+st.subheader("🚨 Alertes Automatiques")
+low_progress = df_filtered[df_filtered['Progress_Pct'] < 80]
+if len(low_progress) > 0:
+    st.error(f"**{len(low_progress)} projets/régions** sous 80% progression !")
+    st.dataframe(low_progress[['Region', 'Project', 'Progress_Pct']].head())
+else:
+    st.success("✅ Tous les projets > 80% progression")
+
+# EXPLICATION IA
+with st.expander("🤖 Comment j'ai créé ce dashboard avec IA"):
+    st.markdown("""
+    **Prompts utilisés dans Claude AI/ChatGPT :**
+    1. "Simule dataset UNICEF Child Protection 6 mois 4 régions 4 projets"
+    2. "Crée Streamlit dashboard avec sidebar filtres + Altair charts"
+    3. "Ajoute KPI metrics + heatmap progression + alertes automatiques"
+    
+    **Usage responsable :** Données anonymisées, vérification manuelle, standards UNICEF (PRP/MICS).
+    """)
+
+st.markdown("---")
+st.caption("Dashboard développé avec IA pour suivi projets UNICEF | Données simulées réalistes")
